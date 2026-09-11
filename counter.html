@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Counter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --bg: #171B26;
+    --bg-vignette: #10131C;
+    --paper: #F7F1E3;
+    --paper-shadow: rgba(0,0,0,0.45);
+    --ink: #23201A;
+    --muted: rgba(35,32,26,0.58);
+    --rule: #DCD3BB;
+    --navy: #26314F;
+    --navy-light: #37456B;
+    --chip-a: #D8B34C;
+    --chip-b: #A9822B;
+    --led-green: #2E7D4F;
+    --led-green-bg: #E4F2E9;
+    --led-red: #B3392C;
+    --led-red-bg: #FBE7E3;
+    --focus: #4A5FA5;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    min-height: 100%;
+  }
+
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, #202742 0%, var(--bg) 55%, var(--bg-vignette) 100%);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+
+  button, input{ font-family: inherit; }
+
+  ::selection{ background: var(--chip-a); color: var(--ink); }
+
+  :focus-visible{
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* ---------- panel shell ---------- */
+
+  .panel{
+    width: 100%;
+    max-width: 440px;
+    background: var(--paper);
+    box-shadow: 0 30px 60px -20px var(--paper-shadow), 0 2px 0 rgba(255,255,255,0.4) inset;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ---------- header ---------- */
+
+  .header{
+    background: var(--navy);
+    color: var(--paper);
+    padding: 20px 24px 16px;
+  }
+
+  .brand{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand-chip{
+    width: 20px;
+    height: 15px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, var(--chip-a), var(--chip-b));
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+    flex: none;
+  }
+
+  .brand-name{
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+  }
+
+  .steps{
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+
+  .step{
+    font-size: 0.75rem;
+    color: rgba(247,241,227,0.5);
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(247,241,227,0.18);
+    transition: color 0.25s ease, border-color 0.25s ease;
+  }
+
+  .step.is-active,
+  .step.is-done{
+    color: var(--paper);
+    border-color: var(--chip-a);
+  }
+
+  /* ---------- views ---------- */
+
+  .view{
+    padding: 24px;
+    display: none;
+  }
+
+  .view.is-active{
+    display: block;
+  }
+
+  .view-title{
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0 0 4px;
+  }
+
+  .view-sub{
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0 0 20px;
+  }
+
+  /* ---------- browse ---------- */
+
+  .item-list{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .item-row{
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .item-name{
+    font-size: 0.95rem;
+  }
+
+  .item-leader{
+    flex: 1;
+    border-bottom: 1px dotted var(--rule);
+    margin-bottom: 4px;
+    min-width: 12px;
+  }
+
+  .item-price{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .item-select{
+    background: none;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .item-select:hover{
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .item-row.is-selected .item-select{
+    background: var(--navy);
+    color: var(--paper);
+    border-color: var(--navy);
+  }
+
+  .cart-strip{
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.25s ease, max-height 0.25s ease;
+  }
+
+  .cart-strip.is-visible{
+    opacity: 1;
+    max-height: 120px;
+  }
+
+  .cart-strip-text{
+    font-size: 0.85rem;
+  }
+
+  .cart-strip-text strong{
+    display: block;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.95rem;
+  }
+
+  /* ---------- buttons ---------- */
+
+  .btn-primary{
+    background: var(--navy);
+    color: var(--paper);
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .btn-primary:hover{ background: var(--navy-light); }
+
+  .btn-primary:disabled{
+    background: #B7B0A0;
+    cursor: not-allowed;
+  }
+
+  .btn-text{
+    background: none;
+    border: none;
+    color: var(--navy);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ---------- pay ---------- */
+
+  .pay-summary{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .pay-summary-name{ font-size: 0.9rem; }
+
+  .pay-summary-price{
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .field{
+    margin-bottom: 16px;
+  }
+
+  .field-label{
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field-row{
+    display: flex;
+    gap: 14px;
+  }
+
+  .field-row .field{
+    flex: 1;
+  }
+
+  .card-input-wrap{
+    position: relative;
+  }
+
+  .card-chip-icon{
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 16px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, var(--chip-a), var(--chip-b));
+  }
+
+  .field input{
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--ink);
+    padding: 8px 2px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  .card-input-wrap input{
+    padding-left: 32px;
+  }
+
+  .field input.has-error{
+    border-bottom-color: var(--led-red);
+  }
+
+  .field-error{
+    font-size: 0.72rem;
+    color: var(--led-red);
+    margin-top: 5px;
+    min-height: 1em;
+  }
+
+  .pay-note{
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .pay-actions{
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  /* ---------- receipt ---------- */
+
+  .receipt-view{
+    padding: 0;
+  }
+
+  .receipt-torn-top,
+  .receipt-torn-bottom{
+    height: 12px;
+    background:
+      linear-gradient(135deg, var(--paper) 50%, transparent 50%) 0 0 / 14px 14px,
+      linear-gradient(-135deg, var(--paper) 50%, transparent 50%) 0 0 / 14px 14px;
+    background-color: var(--bg);
+  }
+
+  .receipt-torn-bottom{ transform: rotate(180deg); }
+
+  .receipt-inner{
+    padding: 22px 24px 24px;
+    animation: printIn 0.5s cubic-bezier(.2,.7,.3,1) both;
+  }
+
+  @keyframes printIn{
+    from{ opacity: 0; transform: translateY(-14px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .receipt-brand{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .receipt-line{
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    padding: 6px 0;
+  }
+
+  .receipt-line.total{
+    font-weight: 600;
+    font-family: "IBM Plex Mono", monospace;
+    border-top: 1px dashed var(--rule);
+    margin-top: 6px;
+    padding-top: 12px;
+  }
+
+  .receipt-rule{
+    border: none;
+    border-top: 1px dashed var(--rule);
+    margin: 14px 0;
+  }
+
+  .status-block{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 4px;
+  }
+
+  .led{
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex: none;
+    animation: pulse 0.6s ease-out 1;
+  }
+
+  .led.approved{ background: var(--led-green); box-shadow: 0 0 0 4px var(--led-green-bg); }
+  .led.declined{ background: var(--led-red); box-shadow: 0 0 0 4px var(--led-red-bg); }
+
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(0,0,0,0); }
+    40%{ box-shadow: 0 0 0 8px rgba(0,0,0,0.05); }
+    100%{ box-shadow: 0 0 0 4px transparent; }
+  }
+
+  .status-text{
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .status-text.approved{ color: var(--led-green); }
+  .status-text.declined{ color: var(--led-red); }
+
+  .status-reason{
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 4px 0 18px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .receipt-inner{ animation: none; }
+    .led{ animation: none; }
+    *{ transition: none !important; }
+  }
+
+  @media (max-width: 480px){
+    body{ padding: 0; align-items: flex-start; }
+    .panel{ max-width: none; min-height: 100vh; border-radius: 0; }
+    .field-row{ flex-direction: column; gap: 0; }
+  }
+
+</style>
+</head>
+<body>
+
+  <div class="panel">
+
+    <div class="header">
+      <div class="brand">
+        <div class="brand-chip" aria-hidden="true"></div>
+        <div class="brand-name">Counter</div>
+      </div>
+      <div class="steps">
+        <div class="step" data-step="browse">Browse</div>
+        <div class="step" data-step="pay">Pay</div>
+        <div class="step" data-step="receipt">Receipt</div>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <section class="view" data-view="browse">
+      <p class="view-title">What are you buying?</p>
+      <p class="view-sub">Pick one item to take to the counter.</p>
+
+      <ul class="item-list" id="itemList"></ul>
+
+      <div class="cart-strip" id="cartStrip">
+        <div class="cart-strip-text">
+          Selected
+          <strong id="cartStripName">—</strong>
+        </div>
+        <button class="btn-primary" id="proceedBtn">Continue to payment</button>
+      </div>
+    </section>
+
+    <!-- PAY -->
+    <section class="view" data-view="pay">
+      <p class="view-title">Pay for your order</p>
+      <p class="view-sub">Enter the card details to complete the sale.</p>
+
+      <div class="pay-summary">
+        <span class="pay-summary-name" id="paySummaryName">—</span>
+        <span class="pay-summary-price" id="paySummaryPrice">—</span>
+      </div>
+
+      <form id="payForm" novalidate>
+        <div class="field">
+          <label class="field-label" for="cardNumber">Card number</label>
+          <div class="card-input-wrap">
+            <div class="card-chip-icon" aria-hidden="true"></div>
+            <input type="text" id="cardNumber" inputmode="numeric" autocomplete="cc-number"
+                   placeholder="0000 0000 0000 0000" maxlength="19">
+          </div>
+          <div class="field-error" id="cardError"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label" for="expiry">Expiry</label>
+            <input type="text" id="expiry" inputmode="numeric" autocomplete="cc-exp"
+                   placeholder="MM/YY" maxlength="5">
+            <div class="field-error" id="expiryError"></div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="cvv">CVV</label>
+            <input type="text" id="cvv" inputmode="numeric" autocomplete="cc-csc"
+                   placeholder="000" maxlength="4">
+            <div class="field-error" id="cvvError"></div>
+          </div>
+        </div>
+
+        <p class="pay-note">Card numbers are checked in your browser and never sent anywhere.</p>
+
+        <div class="pay-actions">
+          <button type="button" class="btn-text" id="backToBrowse">Back</button>
+          <button type="submit" class="btn-primary" id="payBtn">Pay <span id="payBtnAmount"></span></button>
+        </div>
+      </form>
+    </section>
+
+    <!-- RECEIPT -->
+    <section class="view receipt-view" data-view="receipt">
+      <div class="receipt-torn-top" aria-hidden="true"></div>
+      <div class="receipt-inner" id="receiptInner">
+        <p class="receipt-brand">Counter — receipt</p>
+
+        <div class="receipt-line">
+          <span id="receiptItemName">—</span>
+          <span id="receiptItemPrice">—</span>
+        </div>
+        <div class="receipt-line total">
+          <span>Total</span>
+          <span id="receiptTotal">—</span>
+        </div>
+
+        <hr class="receipt-rule">
+
+        <div class="receipt-line">
+          <span>Card</span>
+          <span id="receiptCard">—</span>
+        </div>
+
+        <div class="status-block">
+          <span class="led" id="statusLed"></span>
+          <span class="status-text" id="statusText">—</span>
+        </div>
+        <p class="status-reason" id="statusReason"></p>
+
+        <button class="btn-text" id="startOverBtn">Start a new order</button>
+      </div>
+      <div class="receipt-torn-bottom" aria-hidden="true"></div>
+    </section>
+
+  </div>
+
+<script>
+(function(){
+
+  var items = [
+    { name: "Laptop", price: 60000 },
+    { name: "Gaming Laptop", price: 100000 },
+    { name: "Android phone", price: 50000 },
+    { name: "iPhone", price: 80000 }
+  ];
+
+  var state = { view: "browse", item: null };
+
+  function formatINR(n){
+    return "₹" + n.toLocaleString("en-IN");
+  }
+
+  /* ---------- view switching ---------- */
+
+  function setView(name){
+    state.view = name;
+    document.querySelectorAll(".view").forEach(function(el){
+      el.classList.toggle("is-active", el.dataset.view === name);
+    });
+    var order = ["browse", "pay", "receipt"];
+    var idx = order.indexOf(name);
+    document.querySelectorAll(".step").forEach(function(el){
+      var stepIdx = order.indexOf(el.dataset.step);
+      el.classList.toggle("is-active", stepIdx === idx);
+      el.classList.toggle("is-done", stepIdx < idx);
+    });
+  }
+
+  /* ---------- browse ---------- */
+
+  var itemList = document.getElementById("itemList");
+  var cartStrip = document.getElementById("cartStrip");
+  var cartStripName = document.getElementById("cartStripName");
+
+  items.forEach(function(item, i){
+    var li = document.createElement("li");
+    li.className = "item-row";
+    li.dataset.index = i;
+    li.innerHTML =
+      '<span class="item-name">' + item.name + '</span>' +
+      '<span class="item-leader"></span>' +
+      '<span class="item-price">' + formatINR(item.price) + '</span>' +
+      '<button class="item-select" type="button">Select</button>';
+    itemList.appendChild(li);
+  });
+
+  itemList.addEventListener("click", function(e){
+    if(e.target.tagName !== "BUTTON") return;
+    var row = e.target.closest(".item-row");
+    var index = Number(row.dataset.index);
+    state.item = items[index];
+
+    document.querySelectorAll(".item-row").forEach(function(r){
+      r.classList.remove("is-selected");
+      r.querySelector(".item-select").textContent = "Select";
+    });
+    row.classList.add("is-selected");
+    row.querySelector(".item-select").textContent = "Selected";
+
+    cartStripName.textContent = state.item.name + " — " + formatINR(state.item.price);
+    cartStrip.classList.add("is-visible");
+  });
+
+  document.getElementById("proceedBtn").addEventListener("click", function(){
+    if(!state.item) return;
+    document.getElementById("paySummaryName").textContent = state.item.name;
+    document.getElementById("paySummaryPrice").textContent = formatINR(state.item.price);
+    document.getElementById("payBtnAmount").textContent = formatINR(state.item.price);
+    setView("pay");
+  });
+
+  document.getElementById("backToBrowse").addEventListener("click", function(){
+    setView("browse");
+  });
+
+  /* ---------- pay: input formatting ---------- */
+
+  var cardInput = document.getElementById("cardNumber");
+  var expiryInput = document.getElementById("expiry");
+  var cvvInput = document.getElementById("cvv");
+
+  cardInput.addEventListener("input", function(){
+    var digits = cardInput.value.replace(/\D/g, "").slice(0, 16);
+    cardInput.value = digits.replace(/(.{4})/g, "$1 ").trim();
+    clearError(cardInput, "cardError");
+  });
+
+  expiryInput.addEventListener("input", function(){
+    var digits = expiryInput.value.replace(/\D/g, "").slice(0, 4);
+    if(digits.length > 2){
+      expiryInput.value = digits.slice(0, 2) + "/" + digits.slice(2);
+    } else {
+      expiryInput.value = digits;
+    }
+    clearError(expiryInput, "expiryError");
+  });
+
+  cvvInput.addEventListener("input", function(){
+    cvvInput.value = cvvInput.value.replace(/\D/g, "").slice(0, 4);
+    clearError(cvvInput, "cvvError");
+  });
+
+  function clearError(input, errorId){
+    input.classList.remove("has-error");
+    document.getElementById(errorId).textContent = "";
+  }
+
+  function setError(input, errorId, message){
+    input.classList.add("has-error");
+    document.getElementById(errorId).textContent = message;
+  }
+
+  /* ---------- Luhn check + card type ---------- */
+
+  function luhnValid(cardnum){
+    var total = 0;
+    var doubleDigit = false;
+    for(var i = cardnum.length - 1; i >= 0; i--){
+      var digit = Number(cardnum[i]);
+      if(doubleDigit){
+        digit *= 2;
+        if(digit > 9) digit -= 9;
+      }
+      total += digit;
+      doubleDigit = !doubleDigit;
+    }
+    return total % 10 === 0;
+  }
+
+  function cardType(cardnum){
+    if(cardnum.length === 16){
+      if(cardnum[0] === "4") return "VISA";
+      if(cardnum[0] === "5") return "MASTERCARD";
+      if(cardnum[0] === "6") return "RUPAY";
+      return "CARD";
+    }
+    if(cardnum.length === 15) return "AMEX";
+    return "CARD";
+  }
+
+  /* ---------- pay: submit ---------- */
+
+  document.getElementById("payForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    var cardDigits = cardInput.value.replace(/\D/g, "");
+    var expiryDigits = expiryInput.value.replace(/\D/g, "");
+    var cvvDigits = cvvInput.value.replace(/\D/g, "");
+
+    var valid = true;
+    var declineReason = "";
+
+    if(cardDigits.length < 15){
+      setError(cardInput, "cardError", "Card number is too short.");
+      valid = false;
+    } else if(!luhnValid(cardDigits)){
+      setError(cardInput, "cardError", "Card number doesn't check out.");
+      valid = false;
+      declineReason = "Card number failed the check.";
+    }
+
+    if(expiryDigits.length !== 4){
+      setError(expiryInput, "expiryError", "Use MM/YY.");
+      valid = false;
+    } else {
+      var mm = Number(expiryDigits.slice(0, 2));
+      var yy = Number(expiryDigits.slice(2, 4));
+      if(mm < 1 || mm > 12){
+        setError(expiryInput, "expiryError", "Month must be 01–12.");
+        valid = false;
+      } else {
+        var now = new Date();
+        var currentYY = now.getFullYear() % 100;
+        var currentMM = now.getMonth() + 1;
+        if(yy < currentYY || (yy === currentYY && mm < currentMM)){
+          setError(expiryInput, "expiryError", "This card has expired.");
+          valid = false;
+          declineReason = declineReason || "Expiry date has passed.";
+        }
+      }
+    }
+
+    if(cvvDigits.length < 3){
+      setError(cvvInput, "cvvError", "Too short.");
+      valid = false;
+    }
+
+    if(!valid && !declineReason){
+      // Field-level errors only (e.g. incomplete entry) — don't proceed to a decline screen.
+      return;
+    }
+
+    var approved = valid;
+    showReceipt(cardDigits, approved, declineReason);
+  });
+
+  function showReceipt(cardDigits, approved, declineReason){
+    document.getElementById("receiptItemName").textContent = state.item.name;
+    document.getElementById("receiptItemPrice").textContent = formatINR(state.item.price);
+    document.getElementById("receiptTotal").textContent = formatINR(state.item.price);
+
+    var last4 = cardDigits.slice(-4);
+    var type = cardType(cardDigits);
+    document.getElementById("receiptCard").textContent = type + " •••• " + last4;
+
+    var led = document.getElementById("statusLed");
+    var statusText = document.getElementById("statusText");
+    var statusReason = document.getElementById("statusReason");
+
+    led.className = "led " + (approved ? "approved" : "declined");
+    statusText.className = "status-text " + (approved ? "approved" : "declined");
+    statusText.textContent = approved ? "Approved" : "Declined";
+    statusReason.textContent = approved
+      ? "Payment went through — thanks for shopping."
+      : declineReason || "The payment couldn't be completed.";
+
+    // restart the print-in animation
+    var inner = document.getElementById("receiptInner");
+    inner.style.animation = "none";
+    void inner.offsetWidth;
+    inner.style.animation = "";
+
+    setView("receipt");
+  }
+
+  document.getElementById("startOverBtn").addEventListener("click", function(){
+    state.item = null;
+    cardInput.value = "";
+    expiryInput.value = "";
+    cvvInput.value = "";
+    [cardInput, expiryInput, cvvInput].forEach(function(input){
+      input.classList.remove("has-error");
+    });
+    ["cardError", "expiryError", "cvvError"].forEach(function(id){
+      document.getElementById(id).textContent = "";
+    });
+    document.querySelectorAll(".item-row").forEach(function(r){
+      r.classList.remove("is-selected");
+      r.querySelector(".item-select").textContent = "Select";
+    });
+    cartStrip.classList.remove("is-visible");
+    setView("browse");
+  });
+
+  setView("browse");
+
+})();
+</script>
+
+</body>
+</html>
