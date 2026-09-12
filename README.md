@@ -1,3 +1,14 @@
+**Project Title - Online store cart & order pipeline**
+**Team Members -**
+- Aanurag Chakraborty - 2620030684
+- Amlan Prusty - 2620040026
+
+**STATUS -**
+- CO1, CO2, CO3 completed.
+
+
+
+
 **Approach**
 - First I made a card authenticator, using the Luhn's algorithm, which will check number of digits of the card details, if the no. of digits is 15, then the card will be flagged as an American express card using the AMEX network, if the number is 16, then the card will be flagged as either a visa, a mastercard or a rupay card.
 (the reason for only these 4 is that these are the most common types of card issued in india, there are other networks like dinersclub international which i have not taken into account because of its tiny userbase.)
